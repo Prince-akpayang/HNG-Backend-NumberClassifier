@@ -9,19 +9,31 @@ CORS(app)
 
 def is_prime(n):
     if n < 2: return False
-    return all(n % i != 0 for i in range(2, int(n**0.5) + 1))
+    if n in (2, 3): return True
+    if n % 2 == 0 or n % 3 == 0: return False
+    for i in range(5, int(n ** 0.5) + 1, 2):
+        if n % i == 0:
+            return False
+    return True
 
 def is_perfect(n):
-    return sum(i for i in range(1, n) if n % i == 0) == n
+    if n < 2: return False
+    total = 1
+    for i in range(2, int(n ** 0.5) + 1):
+        if n % i == 0:
+            total += i + (n // i if i != n // i else 0)
+        if total > n:
+            return False
+    return total == n
 
 def is_armstrong(n):
-    digits = [int(d) for d in str(n)]
+    digits = list(map(int, str(n)))
     return sum(d ** len(digits) for d in digits) == n
 
 async def get_fun_fact(n):
     url = f"http://numbersapi.com/{n}/math?json"
     try:
-        async with httpx.AsyncClient(timeout=2.0) as client:
+        async with httpx.AsyncClient(timeout=0.5) as client:
             r = await client.get(url)
             return r.json().get('text', 'No fun fact available.') if r.status_code == 200 else "No fun fact available."
     except httpx.RequestError:
@@ -29,11 +41,15 @@ async def get_fun_fact(n):
 
 @app.route('/api/classify-number', methods=['GET'])
 async def classify_number():
-    number = request.args.get('number', "").strip()
-    if not number.isdigit():
-        return jsonify({"number": number, "error": True}), 400
+    number_str = request.args.get('number', "").strip()
+    
+    if not number_str.lstrip('-').isdigit():
+        return jsonify({"number": number_str, "error": "Invalid input. Enter a positive integer."}), 400
 
-    number = int(number)
+    number = int(number_str)
+    if number < 0:
+        return jsonify({"number": number, "error": "Negative numbers are not supported."}), 400
+
     prime, perfect, armstrong = await asyncio.gather(
         asyncio.to_thread(is_prime, number),
         asyncio.to_thread(is_perfect, number),
