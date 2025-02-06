@@ -1,7 +1,11 @@
 from flask import Flask, jsonify, request
 import requests
+from flask_cors import CORS  # Import CORS
 
 app = Flask(__name__)
+
+# Enable CORS
+CORS(app)
 
 # Helper function to check if a number is prime
 def is_prime(number):
@@ -68,4 +72,4 @@ def classify_number():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=10000)  
+    app.run(host="0.0.0.0", port=10000)  # Change port if needed
