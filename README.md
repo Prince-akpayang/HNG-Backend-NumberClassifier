@@ -1,4 +1,4 @@
-# Recommended Repo Name: HNG-Backend-NumberClassifier
+# HNG-Backend-NumberClassifier
 
 
 ---
