@@ -138,5 +138,12 @@ This project is licensed under the MIT License.
 
 ---
 
-Now you have a beautiful README that explains everything about your repository! Let me know if you want any modifications. 🚀
+API URL - https://hng-backend-numberclassifier.onrender.com
 
+---
+
+to use just add -/api/classify-number?number=31
+
+or any number to the API URL
+----
+Etini Akpayang 
