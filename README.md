@@ -1,5 +1,3 @@
-# HNG-Backend-NumberClassifier
-
 
 ---
 
