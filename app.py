@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 import asyncio
 import httpx  # Use `httpx` instead of `requests`
 from flask_cors import CORS
+from asgiref.wsgi import WsgiToAsgi  # Convert Flask to ASGI
 
 app = Flask(__name__)
 CORS(app)
@@ -75,6 +76,9 @@ async def classify_number():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# **Convert Flask app to ASGI**
+asgi_app = WsgiToAsgi(app)
+
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=10000)  # Use Uvicorn for speed
+    uvicorn.run(asgi_app, host="0.0.0.0", port=10000)  # Use Uvicorn for speed
