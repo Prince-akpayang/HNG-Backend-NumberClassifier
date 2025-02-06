@@ -28,9 +28,12 @@ def is_armstrong(number):
 
 # Helper function to fetch fun fact from Numbers API
 def get_fun_fact(number):
-    response = requests.get(f'http://numbersapi.com/{number}?json')
-    if response.status_code == 200:
-        return response.json().get('text', '')
+    try:
+        response = requests.get(f'http://numbersapi.com/{number}?json')
+        if response.status_code == 200:
+            return response.json().get('text', 'No fun fact available.')
+    except requests.exceptions.RequestException:
+        return "No fun fact available."
     return "No fun fact available."
 
 @app.route('/api/classify-number', methods=['GET'])
@@ -38,8 +41,9 @@ def classify_number():
     try:
         number = request.args.get('number')
 
-        if not number.isdigit():
-            return jsonify({"number": number, "error": True}), 400
+        # Handle missing or invalid number input
+        if number is None or not number.strip().isdigit():
+            return jsonify({"error": "Invalid or missing number parameter"}), 400
 
         number = int(number)
 
@@ -50,10 +54,7 @@ def classify_number():
         properties = []
         if armstrong:
             properties.append("armstrong")
-        if number % 2 == 0:
-            properties.append("even")
-        else:
-            properties.append("odd")
+        properties.append("even" if number % 2 == 0 else "odd")
 
         fun_fact = get_fun_fact(number)
 
