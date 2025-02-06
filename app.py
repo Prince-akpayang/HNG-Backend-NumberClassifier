@@ -1,13 +1,12 @@
 from flask import Flask, jsonify, request
-import requests
-from flask_cors import CORS  # Import CORS
+import asyncio
+import httpx  # Use `httpx` instead of `requests`
+from flask_cors import CORS
 
 app = Flask(__name__)
-
-# Enable CORS
 CORS(app)
 
-# Helper function to check if a number is prime
+# Check if a number is prime
 def is_prime(number):
     if number <= 1:
         return False
@@ -16,28 +15,30 @@ def is_prime(number):
             return False
     return True
 
-# Helper function to check if a number is perfect
+# Check if a number is perfect
 def is_perfect(number):
     divisors = [i for i in range(1, number) if number % i == 0]
     return sum(divisors) == number
 
-# Helper function to check if a number is an Armstrong number
+# Check if a number is an Armstrong number
 def is_armstrong(number):
     digits = [int(digit) for digit in str(number)]
     return sum(digit ** len(digits) for digit in digits) == number
 
-# Helper function to fetch fun fact from Numbers API
-def get_fun_fact(number):
+# **Use async for fetching fun fact**
+async def get_fun_fact(number):
+    url = f"http://numbersapi.com/{number}?json"
     try:
-        response = requests.get(f'http://numbersapi.com/{number}?json')
-        if response.status_code == 200:
-            return response.json().get('text', 'No fun fact available.')
-    except requests.exceptions.RequestException:
+        async with httpx.AsyncClient(timeout=2.0) as client:  # **Set timeout**
+            response = await client.get(url)
+            if response.status_code == 200:
+                return response.json().get('text', 'No fun fact available.')
+    except httpx.RequestError:
         return "No fun fact available."
     return "No fun fact available."
 
 @app.route('/api/classify-number', methods=['GET'])
-def classify_number():
+async def classify_number():
     try:
         number = request.args.get('number')
 
@@ -47,16 +48,18 @@ def classify_number():
 
         number = int(number)
 
-        prime = is_prime(number)
-        perfect = is_perfect(number)
-        armstrong = is_armstrong(number)
+        # **Run functions in parallel**
+        prime, perfect, armstrong = await asyncio.gather(
+            asyncio.to_thread(is_prime, number),
+            asyncio.to_thread(is_perfect, number),
+            asyncio.to_thread(is_armstrong, number),
+        )
 
-        properties = []
-        if armstrong:
-            properties.append("armstrong")
+        properties = ["armstrong"] if armstrong else []
         properties.append("even" if number % 2 == 0 else "odd")
 
-        fun_fact = get_fun_fact(number)
+        # **Fetch fun fact asynchronously**
+        fun_fact = await get_fun_fact(number)
 
         response = {
             "number": number,
@@ -73,4 +76,5 @@ def classify_number():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=10000)  # Change port if needed
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=10000)  # Use Uvicorn for speed
